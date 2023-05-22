@@ -1,0 +1,1 @@
+sudo docker run --gpus all --shm-size=8g -it -v /home/jet/robotics/semantic_navigation/docker_fcaf3d/root:/mmdetection3d/data competent_gould

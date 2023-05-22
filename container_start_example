@@ -1,0 +1,2 @@
+sudo docker start competent_gould
+sudo docker exec -it competent_gould bash

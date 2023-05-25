@@ -14,24 +14,52 @@ RUN pip install mmcv-full==1.7.1
 RUN pip install mmdet==3.0.0
 RUN pip install mmsegmentation==1.0.0
 
-# now download and, compile and install llvm and llvmlite. We can't use apt packages because wither llvm or llvmlite doesn't have aarch64 
-# architecture packages, but they need to be for Jetson and versions need to match too, so it's best to compile- no big deal, just takes
-# a long time
-WORKDIR /llvm_src
-RUN wget https://github.com/llvm/llvm-project/releases/download/llvmorg-11.1.0/llvm-11.1.0.src.tar.xz
-RUN git clone https://github.com/archie1983/llvmlite
-WORKDIR /llvm_src/llvmlite
-RUN git checkout jetson_xavier_r34.1.1
-WORKDIR /llvm_src
-RUN tar -xvf llvm-11.1.0.src.tar.xz 
-WORKDIR /llvm_src/llvm-11.1.0
-RUN patch -p1 -i ../llvmlite/conda-recipes/llvm-lto-static.patch
-RUN patch -p1 -i ../llvmlite/conda-recipes/partial-testing.patch
-RUN patch -p1 -i ../llvmlite/conda-recipes/intel-D47188-svml-VF.patch
-RUN patch -p1 -i ../llvmlite/conda-recipes/expect-fastmath-entrypoints-in-add-TLI-mappings.ll.patch
-RUN patch -p1 -i ../llvmlite/conda-recipes/0001-Revert-Limit-size-of-non-GlobalValue-name.patch
-RUN patch -p1 -i ../llvmlite/conda-recipes/llvm_11_consecutive_registers.patch
-RUN export PREFIX=/usr CPU_COUNT=4
-RUN ../llvmlite/conda-recipes/llvmdev/build.sh
+## now download and, compile and install llvm and llvmlite. We can't use apt packages because wither llvm or llvmlite doesn't have aarch64 
+## architecture packages, but they need to be for Jetson and versions need to match too, so it's best to compile- no big deal, just takes
+## a long time
+#WORKDIR /llvm_src
+#RUN wget https://github.com/llvm/llvm-project/releases/download/llvmorg-11.1.0/llvm-11.1.0.src.tar.xz
+#RUN git clone https://github.com/archie1983/llvmlite
+#WORKDIR /llvm_src/llvmlite
+#RUN git checkout jetson_xavier_r34.1.1
+#WORKDIR /llvm_src
+#RUN tar -xvf llvm-11.1.0.src.tar.xz 
+#WORKDIR /llvm_src/llvm-11.1.0
+#RUN patch -p1 -i ../llvmlite/conda-recipes/llvm-lto-static.patch
+#RUN patch -p1 -i ../llvmlite/conda-recipes/partial-testing.patch
+#RUN patch -p1 -i ../llvmlite/conda-recipes/intel-D47188-svml-VF.patch
+#RUN patch -p1 -i ../llvmlite/conda-recipes/expect-fastmath-entrypoints-in-add-TLI-mappings.ll.patch
+#RUN patch -p1 -i ../llvmlite/conda-recipes/0001-Revert-Limit-size-of-non-GlobalValue-name.patch
+#RUN patch -p1 -i ../llvmlite/conda-recipes/llvm_11_consecutive_registers.patch
+#RUN export PREFIX=/usr CPU_COUNT=4
+#RUN ../llvmlite/conda-recipes/llvmdev/build.sh
 
 # That should get us to the place where llvm and llvmlite is installed
+
+# Instead of patching and building llvmlite here, we can just clone from my repository already patched llvm and llvmlite
+# and build that.
+WORKDIR /ae_src
+# First clone and checkout all required source
+RUN git clone https://github.com/archie1983/llvmlite
+RUN git clone https://github.com/archie1983/llvm-project
+RUN git clone https://github.com/archie1983/fcaf3d
+WORKDIR /ae_src/fcaf3d
+RUN git checkout for_jetson_xavier_r34_ptc1.11
+WORKDIR /ae_src/llvmlite
+RUN git checkout for_fcaf3d_on_jetson_xavier_r34
+WORKDIR /ae_src/llvm-project
+RUN git checkout for_fcaf3d_on_jetson_xavier_r34
+
+# Now build and install llvmlite
+RUN export PREFIX=/usr/local CPU_COUNT=4
+RUN ../llvmlite/conda-recipes/llvmdev/build.sh
+WORKDIR /ae_src/llvmlite
+RUN export LLVM_CONFIG=/usr/local/bin/llvm-config
+#RUN python setup.py install
+RUN pip install .
+
+# Now build and install fcaf3d
+WORKDIR /ae_src/fcaf3d
+RUN pip install -v -e .
+
+# Or we can even just try to install the pre-built wheels.

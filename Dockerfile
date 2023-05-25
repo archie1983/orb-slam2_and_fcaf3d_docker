@@ -43,11 +43,15 @@ WORKDIR /ae_src
 RUN git clone https://github.com/archie1983/llvmlite
 RUN git clone https://github.com/archie1983/llvm-project
 RUN git clone https://github.com/archie1983/fcaf3d
+RUN git clone https://github.com/archie1983/MinkowskiEngine
+
 WORKDIR /ae_src/fcaf3d
 RUN git checkout for_jetson_xavier_r34_ptc1.11
 WORKDIR /ae_src/llvmlite
 RUN git checkout for_fcaf3d_on_jetson_xavier_r34
 WORKDIR /ae_src/llvm-project
+RUN git checkout for_fcaf3d_on_jetson_xavier_r34
+WORKDIR /ae_src/MinkowskiEngine
 RUN git checkout for_fcaf3d_on_jetson_xavier_r34
 
 # Now build and install llvmlite
@@ -60,6 +64,12 @@ RUN pip install .
 
 # Now build and install fcaf3d
 WORKDIR /ae_src/fcaf3d
+RUN pip install -r requirements/build.txt
+#RUN pip install --no-cache-dir -e .
 RUN pip install -v -e .
+
+# Now MinkowskiEngine
+WORKDIR /ae_src/MinkowskiEngine
+pip install -U --install-option="--blas=openblas" --install-option="--force_cuda" -v --no-deps .
 
 # Or we can even just try to install the pre-built wheels.

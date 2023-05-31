@@ -70,6 +70,15 @@ RUN pip install -v -e .
 
 # Now MinkowskiEngine
 WORKDIR /ae_src/MinkowskiEngine
-pip install -U --install-option="--blas=openblas" --install-option="--force_cuda" -v --no-deps .
+RUN pip install -U --install-option="--blas=openblas" --install-option="--force_cuda" -v --no-deps .
+
+# Now rotated_iou
+WORKDIR /ae_src/
+RUN git clone https://github.com/archie1983/Rotated_IoU
+RUN git checkout for_fcaf3d_on_jetson_xavier_r34
+WORKDIR /ae_src/Rotated_IoU
+RUN cp -fvR cuda_op ../fcaf3d/mmdet3d/ops/rotated_iou
+#python3 setup.py install
+RUN pip install .
 
 # Or we can even just try to install the pre-built wheels.

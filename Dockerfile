@@ -81,4 +81,14 @@ RUN cp -fvR cuda_op ../fcaf3d/mmdet3d/ops/rotated_iou
 #python3 setup.py install
 RUN pip install .
 
+# Now Pangolin
+WORKDIR /ae_src
+RUN git clone --recursive https://github.com/archie1983/Pangolin
+WORKDIR /ae_src/Pangolin
+RUN git checkout for_fcaf3d_on_jetson_xavier_r34
+RUN ./scripts/install_prerequisites.sh recommended
+RUN ./scripts/install_prerequisites.sh -m apt all
+RUN cmake -B build
+RUN cmake --build build
+
 # Or we can even just try to install the pre-built wheels.

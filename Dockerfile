@@ -3,7 +3,7 @@ FROM nvcr.io/nvidia/l4t-pytorch:r34.1.1-pth1.11-py3 AS pytorch_cuda
 #FROM l4t-pytorch:r32.7.1-pth1.9-py3 AS pytorch_cuda
 
 # updates and software from apt
-RUN apt-get -y update && apt-get -y install wget libedit-dev autoconf bc build-essential g++-8 gcc-8 clang-8 lld-8 gettext-base gfortran-8 iputils-ping libbz2-dev libc++-dev libcgal-dev libffi-dev libfreetype6-dev libhdf5-dev libjpeg-dev liblzma-dev libncurses5-dev libncursesw5-dev libpng-dev libreadline-dev libssl-dev libsqlite3-dev libxml2-dev libxslt-dev locales moreutils openssl python-openssl rsync scons python3-pip libopenblas-dev;
+RUN apt-get -y update && apt-get -y install wget libedit-dev autoconf bc build-essential g++-8 gcc-8 clang-8 lld-8 gettext-base gfortran-8 iputils-ping libbz2-dev libc++-dev libcgal-dev libffi-dev libfreetype6-dev libhdf5-dev libjpeg-dev liblzma-dev libncurses5-dev libncursesw5-dev libpng-dev libreadline-dev libssl-dev libsqlite3-dev libxml2-dev libxslt-dev locales moreutils openssl python-openssl rsync scons python3-pip libopenblas-dev libeigen3-dev;
 
 #RUN pip install mmcv-full==1.3.8 -f https://download.openmmlab.com/mmcv/dist/cu102/torch1.8.0/index.html
 #RUN pip install mmdet==2.14.0

@@ -44,6 +44,9 @@ RUN git clone https://github.com/archie1983/llvmlite
 RUN git clone https://github.com/archie1983/llvm-project
 RUN git clone https://github.com/archie1983/fcaf3d
 RUN git clone https://github.com/archie1983/MinkowskiEngine
+
+# MultiMap3D has to go in a special directory where we will initiate a catkin workspace
+WORKDIR /ae_src/ros/src
 RUN git clone https://github.com/archie1983/MultiMap3D
 
 WORKDIR /ae_src/fcaf3d
@@ -54,7 +57,7 @@ WORKDIR /ae_src/llvm-project
 RUN git checkout for_fcaf3d_on_jetson_xavier_r34
 WORKDIR /ae_src/MinkowskiEngine
 RUN git checkout for_fcaf3d_on_jetson_xavier_r34
-WORKDIR /ae_src/MultiMap3D
+WORKDIR /ae_src/ros/src/MultiMap3D
 RUN git checkout for_fcaf3d_on_jetson_xavier_r34
 
 # Now build and install llvmlite
@@ -77,7 +80,7 @@ WORKDIR /ae_src/MinkowskiEngine
 RUN pip install -U --install-option="--blas=openblas" --install-option="--force_cuda" -v --no-deps .
 
 # Now rotated_iou
-WORKDIR /ae_src/
+WORKDIR /ae_src
 RUN git clone https://github.com/archie1983/Rotated_IoU
 RUN git checkout for_fcaf3d_on_jetson_xavier_r34
 WORKDIR /ae_src/Rotated_IoU
@@ -101,16 +104,21 @@ RUN curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt
 RUN apt-get -y update && apt-get -y install ros-noetic-desktop-full ros-noetic-pcl-conversions ros-noetic-pcl-ros ros-noetic-perception
 
 # Now ORB-SLAM2 within MultiMap3D
-WORKDIR /ae_src/MultiMap3D/ORB-SLAM2_DENSE-master/Vocabulary
+WORKDIR /ae_src/ros/src/MultiMap3D/ORB-SLAM2_DENSE-master/Vocabulary
 RUN gunzip ORBvoc.txt.tar.gz 
 RUN tar -xvf ORBvoc.txt.tar
 RUN source /opt/ros/noetic/setup.bash
 RUN export LD_LIBRARY_PATH=/usr/include/eigen3:$LD_LIBRARY_PATH
-WORKDIR /ae_src/MultiMap3D/ORB-SLAM2_DENSE-master
+WORKDIR /ae_src/ros/src/MultiMap3D/ORB-SLAM2_DENSE-master
 RUN ./build.sh
 
-WORKDIR /ae_src/MultiMap3D/ORB-SLAM2_DENSE-master/ROS/ORB_SLAM2_DENSE/build
+WORKDIR /ae_src/ros/src/MultiMap3D/ORB-SLAM2_DENSE-master/ROS/ORB_SLAM2_DENSE/build
 RUN cmake ..
 RUN make -j4
+
+WORKDIR /ae_src/ros/src
+RUN catkin_init_workspace
+WORKDIR /ae_src/ros
+RUN catkin_make
 
 # Or we can even just try to install the pre-built wheels.

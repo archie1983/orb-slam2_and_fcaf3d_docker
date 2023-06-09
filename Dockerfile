@@ -3,16 +3,23 @@ FROM nvcr.io/nvidia/l4t-pytorch:r34.1.1-pth1.11-py3 AS pytorch_cuda
 #FROM l4t-pytorch:r32.7.1-pth1.9-py3 AS pytorch_cuda
 
 # updates and software from apt
-RUN apt-get -y update && apt-get -y install wget libedit-dev autoconf bc build-essential g++-8 gcc-8 clang-8 lld-8 gettext-base gfortran-8 iputils-ping libbz2-dev libc++-dev libcgal-dev libffi-dev libfreetype6-dev libhdf5-dev libjpeg-dev liblzma-dev libncurses5-dev libncursesw5-dev libpng-dev libreadline-dev libssl-dev libsqlite3-dev libxml2-dev libxslt-dev locales moreutils openssl python-openssl rsync scons python3-pip libopenblas-dev libeigen3-dev curl;
+RUN apt-get -y update && apt-get -y install wget libedit-dev autoconf bc build-essential g++-8 gcc-8 clang-8 lld-8 gettext-base gfortran-8 iputils-ping libbz2-dev libc++-dev libcgal-dev libffi-dev libfreetype6-dev libhdf5-dev libjpeg-dev liblzma-dev libncurses5-dev libncursesw5-dev libpng-dev libreadline-dev libssl-dev libsqlite3-dev libxml2-dev libxslt-dev locales moreutils openssl python-openssl rsync scons python3-pip libopenblas-dev libeigen3-dev curl nano inetutils-ping;
+
+# Now ROS
+RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
+RUN curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add -
+RUN apt-get -y update && apt-get -y install ros-noetic-desktop-full ros-noetic-pcl-conversions ros-noetic-pcl-ros ros-noetic-perception ros-noetic-jsk-recognition-msgs ros-noetic-jsk-footstep-msgs
 
 #RUN pip install mmcv-full==1.3.8 -f https://download.openmmlab.com/mmcv/dist/cu102/torch1.8.0/index.html
 #RUN pip install mmdet==2.14.0
 #RUN pip install mmsegmentation==0.14.1
 
 # whatever we can get from pip
-RUN pip install mmcv-full==1.7.1
-RUN pip install mmdet==3.0.0
-RUN pip install mmsegmentation==1.0.0
+#RUN pip install mmcv-full==1.7.1
+#RUN pip install mmdet==3.0.0
+#RUN pip install mmdet==2.28.0
+#RUN pip install mmsegmentation==1.0.0
+#RUN pip install mmsegmentation==0.30.0
 
 ## now download and, compile and install llvm and llvmlite. We can't use apt packages because wither llvm or llvmlite doesn't have aarch64 
 ## architecture packages, but they need to be for Jetson and versions need to match too, so it's best to compile- no big deal, just takes
@@ -44,6 +51,7 @@ RUN git clone https://github.com/archie1983/llvmlite
 RUN git clone https://github.com/archie1983/llvm-project
 RUN git clone https://github.com/archie1983/fcaf3d
 RUN git clone https://github.com/archie1983/MinkowskiEngine
+RUN git clone https://github.com/archie1983/mmcv/
 
 # MultiMap3D has to go in a special directory where we will initiate a catkin workspace
 WORKDIR /ae_src/ros/src
@@ -59,6 +67,17 @@ WORKDIR /ae_src/MinkowskiEngine
 RUN git checkout for_fcaf3d_on_jetson_xavier_r34
 WORKDIR /ae_src/ros/src/MultiMap3D
 RUN git checkout for_fcaf3d_on_jetson_xavier_r34
+WORKDIR /ae_src/mmcv
+RUN git checkout for_fcaf3d_on_jetson_xavier_r34
+
+# whatever we can get from pip
+RUN pip3 install mmdet==2.28.2 mmsegmentation==0.30.0 numpy==1.19.5 matplotlib==3.6 pandas==1.4.4
+
+# Now mmcv
+WORKDIR /ae_src/mmcv
+RUN export MMCV_WITH_OPS=1
+RUN export FORCE_CUDA=1
+RUN MMCV_WITH_OPS=1 pip install -e .
 
 # Now build and install llvmlite
 WORKDIR /ae_src/llvm-project/llvm
@@ -98,10 +117,10 @@ RUN ./scripts/install_prerequisites.sh -m apt all
 RUN cmake -B build
 RUN cmake --build build
 
-# Now ROS
-RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
-RUN curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add -
-RUN apt-get -y update && apt-get -y install ros-noetic-desktop-full ros-noetic-pcl-conversions ros-noetic-pcl-ros ros-noetic-perception
+## Now ROS
+#RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
+#RUN curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add -
+#RUN apt-get -y update && apt-get -y install ros-noetic-desktop-full ros-noetic-pcl-conversions ros-noetic-pcl-ros ros-noetic-perception ros-noetic-jsk-recognition-msgs ros-noetic-jsk-footstep-msgs
 
 # Now ORB-SLAM2 within MultiMap3D
 WORKDIR /ae_src/ros/src/MultiMap3D/ORB-SLAM2_DENSE-master/Vocabulary

@@ -2,13 +2,25 @@ FROM nvcr.io/nvidia/l4t-pytorch:r34.1.1-pth1.11-py3 AS pytorch_cuda
 #FROM nvcr.io/nvidia/l4t-pytorch:r32.7.1-pth1.9-py3 AS pytorch_cuda
 #FROM l4t-pytorch:r32.7.1-pth1.9-py3 AS pytorch_cuda
 
+# Make apt-get and apt try more than one time
+#RUN echo 'Acquire::Retries "3";' > /etc/apt/apt.conf.d/80-retries
+#RUN echo '\
+#Acquire::Retries "100";\
+#Acquire::https::Timeout "240";\
+#Acquire::http::Timeout "240";\
+#APT::Get::Assume-Yes "true";\
+#APT::Install-Recommends "false";\
+#APT::Install-Suggests "false";\
+#Debug::Acquire::https "true";\
+#' > /etc/apt/apt.conf.d/99custom
+
 # updates and software from apt
-RUN apt-get -y update && apt-get -y install wget libedit-dev autoconf bc build-essential g++-8 gcc-8 clang-8 lld-8 gettext-base gfortran-8 iputils-ping libbz2-dev libc++-dev libcgal-dev libffi-dev libfreetype6-dev libhdf5-dev libjpeg-dev liblzma-dev libncurses5-dev libncursesw5-dev libpng-dev libreadline-dev libssl-dev libsqlite3-dev libxml2-dev libxslt-dev locales moreutils openssl python-openssl rsync scons python3-pip libopenblas-dev libeigen3-dev curl nano inetutils-ping;
+RUN apt-get -y update && apt-get -y install wget libedit-dev autoconf bc build-essential g++-8 gcc-8 clang-8 lld-8 gettext-base gfortran-8 iputils-ping libbz2-dev libc++-dev libcgal-dev libffi-dev libfreetype6-dev libhdf5-dev libjpeg-dev liblzma-dev libncurses5-dev libncursesw5-dev libpng-dev libreadline-dev libssl-dev libsqlite3-dev libxml2-dev libxslt-dev locales moreutils openssl python-openssl rsync scons python3-pip libopenblas-dev libeigen3-dev curl nano;
 
 # Now ROS
 RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
 RUN curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add -
-RUN apt-get -y update && apt-get -y install ros-noetic-desktop-full ros-noetic-pcl-conversions ros-noetic-pcl-ros ros-noetic-perception ros-noetic-jsk-recognition-msgs ros-noetic-jsk-footstep-msgs
+RUN apt-get -y update && apt-get -y -o Dpkg::Options::="--force-overwrite" install ros-noetic-desktop-full ros-noetic-pcl-conversions ros-noetic-pcl-ros ros-noetic-perception ros-noetic-jsk-recognition-msgs ros-noetic-jsk-footstep-msgs
 
 #RUN pip install mmcv-full==1.3.8 -f https://download.openmmlab.com/mmcv/dist/cu102/torch1.8.0/index.html
 #RUN pip install mmdet==2.14.0
@@ -71,13 +83,13 @@ WORKDIR /ae_src/mmcv
 RUN git checkout for_fcaf3d_on_jetson_xavier_r34
 
 # whatever we can get from pip
-RUN pip3 install mmdet==2.28.2 mmsegmentation==0.30.0 numpy==1.19.5 matplotlib==3.6 pandas==1.4.4
+RUN pip3 install mmdet==2.28.2 mmsegmentation==0.30.0 numpy==1.19.5 matplotlib==3.6 pandas==1.4.4 opencv-python==4.5.1.48
 
 # Now mmcv
 WORKDIR /ae_src/mmcv
 RUN export MMCV_WITH_OPS=1
 RUN export FORCE_CUDA=1
-RUN MMCV_WITH_OPS=1 pip install -e .
+RUN MMCV_WITH_OPS=1 pip3 install -e .
 
 # Now build and install llvmlite
 WORKDIR /ae_src/llvm-project/llvm
@@ -86,26 +98,27 @@ RUN ../../llvmlite/conda-recipes/llvmdev/build.sh
 WORKDIR /ae_src/llvmlite
 RUN export LLVM_CONFIG=/usr/local/bin/llvm-config
 #RUN python setup.py install
-RUN pip install .
-
-# Now build and install fcaf3d
-WORKDIR /ae_src/fcaf3d
-RUN pip install -r requirements/build.txt
-#RUN pip install --no-cache-dir -e .
-RUN pip install -v -e .
+RUN pip3 install .
 
 # Now MinkowskiEngine
 WORKDIR /ae_src/MinkowskiEngine
-RUN pip install -U --install-option="--blas=openblas" --install-option="--force_cuda" -v --no-deps .
+RUN export MAX_JOBS=4
+RUN pip3 install -U --install-option="--blas=openblas" --install-option="--force_cuda" -v --no-deps .
 
 # Now rotated_iou
 WORKDIR /ae_src
 RUN git clone https://github.com/archie1983/Rotated_IoU
-RUN git checkout for_fcaf3d_on_jetson_xavier_r34
 WORKDIR /ae_src/Rotated_IoU
+RUN git checkout for_fcaf3d_on_jetson_xavier_r34
 RUN cp -fvR cuda_op ../fcaf3d/mmdet3d/ops/rotated_iou
 #python3 setup.py install
-RUN pip install .
+#RUN pip install .
+
+# Now build and install fcaf3d
+WORKDIR /ae_src/fcaf3d
+RUN pip3 install -r requirements/build.txt
+#RUN pip install --no-cache-dir -e .
+RUN pip3 install -v -e .
 
 # Now Pangolin
 WORKDIR /ae_src
@@ -131,7 +144,7 @@ RUN export LD_LIBRARY_PATH=/usr/include/eigen3:$LD_LIBRARY_PATH
 WORKDIR /ae_src/ros/src/MultiMap3D/ORB-SLAM2_DENSE-master
 RUN ./build.sh
 
-WORKDIR /ae_src/ros/src/MultiMap3D/ORB-SLAM2_DENSE-master/ROS/ORB_SLAM2_DENSE/build
+WORKDIR /ae_src/ros/src/MultiMap3D/ORB-SLAM2_DENSE-master/Examples/ROS/ORB_SLAM2_DENSE/build
 RUN cmake ..
 RUN make -j4
 

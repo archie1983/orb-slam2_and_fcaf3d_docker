@@ -63,7 +63,8 @@ RUN git clone https://github.com/archie1983/llvmlite
 RUN git clone https://github.com/archie1983/llvm-project
 RUN git clone https://github.com/archie1983/fcaf3d
 RUN git clone https://github.com/archie1983/MinkowskiEngine
-RUN git clone https://github.com/archie1983/mmcv/
+RUN git clone https://github.com/archie1983/mmcv
+RUN git clone https://github.com/archie1983/cocoapi
 
 # MultiMap3D has to go in a special directory where we will initiate a catkin workspace
 WORKDIR /ae_src/ros/src
@@ -81,14 +82,25 @@ WORKDIR /ae_src/ros/src/MultiMap3D
 RUN git checkout for_fcaf3d_on_jetson_xavier_r34
 WORKDIR /ae_src/mmcv
 RUN git checkout for_fcaf3d_on_jetson_xavier_r34
+WORKDIR /ae_src/cocoapi
+RUN git checkout for_fcaf3d_on_jetson_xavier_r34
+
 
 # whatever we can get from pip
-RUN pip3 install mmdet==2.28.2 mmsegmentation==0.30.0 numpy==1.19.5 matplotlib==3.6 pandas==1.4.4 opencv-python==4.5.1.48
+RUN pip3 install mmdet==2.28.2 mmsegmentation==0.30.0 numpy==1.19.5 pandas==1.4.4 opencv-python==4.5.1.48 matplotlib==3.5.2 shapely==1.8.5
+
+# Now cocoapi
+WORKDIR /ae_src/cocoapi/PythonAPI
+# Just in case uninstall pycocotools if they've been pulled in from apt repos
+RUN pip3 uninstall pycocotools
+RUN python3 setup.py build_ext install
 
 # Now mmcv
 WORKDIR /ae_src/mmcv
-RUN export MMCV_WITH_OPS=1
-RUN export FORCE_CUDA=1
+#RUN export MMCV_WITH_OPS=1
+#RUN export FORCE_CUDA=1
+ENV MMCV_WITH_OPS=1
+ENV FORCE_CUDA=1
 RUN MMCV_WITH_OPS=1 pip3 install -e .
 
 # Now build and install llvmlite
@@ -96,29 +108,35 @@ WORKDIR /ae_src/llvm-project/llvm
 RUN export PREFIX=/usr/local CPU_COUNT=4
 RUN ../../llvmlite/conda-recipes/llvmdev/build.sh
 WORKDIR /ae_src/llvmlite
-RUN export LLVM_CONFIG=/usr/local/bin/llvm-config
+#RUN export LLVM_CONFIG=/usr/local/bin/llvm-config
+ENV LLVM_CONFIG=/usr/local/bin/llvm-config
 #RUN python setup.py install
 RUN pip3 install .
 
 # Now MinkowskiEngine
 WORKDIR /ae_src/MinkowskiEngine
-RUN export MAX_JOBS=4
+#RUN export MAX_JOBS=4
+ENV MAX_JOBS=4
 RUN pip3 install -U --install-option="--blas=openblas" --install-option="--force_cuda" -v --no-deps .
+
+# Now build and install fcaf3d
+WORKDIR /ae_src/fcaf3d
+ENV FORCE_CUDA="1"
+RUN pip3 install -r requirements/build.txt
+#RUN pip3 install --no-cache-dir -e .
+RUN pip3 install -v -e .
 
 # Now rotated_iou
 WORKDIR /ae_src
 RUN git clone https://github.com/archie1983/Rotated_IoU
 WORKDIR /ae_src/Rotated_IoU
 RUN git checkout for_fcaf3d_on_jetson_xavier_r34
-RUN cp -fvR cuda_op ../fcaf3d/mmdet3d/ops/rotated_iou
+RUN cp -r cuda_op ../fcaf3d/mmdet3d/ops/rotated_iou
+WORKDIR /ae_src/fcaf3d/mmdet3d/ops/rotated_iou/cuda_op
+RUN python3 setup.py install
+
 #python3 setup.py install
 #RUN pip install .
-
-# Now build and install fcaf3d
-WORKDIR /ae_src/fcaf3d
-RUN pip3 install -r requirements/build.txt
-#RUN pip install --no-cache-dir -e .
-RUN pip3 install -v -e .
 
 # Now Pangolin
 WORKDIR /ae_src
@@ -140,7 +158,8 @@ WORKDIR /ae_src/ros/src/MultiMap3D/ORB-SLAM2_DENSE-master/Vocabulary
 RUN gunzip ORBvoc.txt.tar.gz 
 RUN tar -xvf ORBvoc.txt.tar
 RUN source /opt/ros/noetic/setup.bash
-RUN export LD_LIBRARY_PATH=/usr/include/eigen3:$LD_LIBRARY_PATH
+#RUN export LD_LIBRARY_PATH=/usr/include/eigen3:$LD_LIBRARY_PATH
+ENV LD_LIBRARY_PATH=/usr/include/eigen3:$LD_LIBRARY_PATH
 WORKDIR /ae_src/ros/src/MultiMap3D/ORB-SLAM2_DENSE-master
 RUN ./build.sh
 

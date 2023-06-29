@@ -175,4 +175,17 @@ RUN catkin_init_workspace
 WORKDIR /ae_src/ros
 RUN catkin_make
 
+# Now download model and configuration for our sparse network
+WORKDIR /ae_src/ros/src/MultiMap3D/configs/fcaf3d
+wget https://raw.githubusercontent.com/SamsungLabs/fcaf3d/master/configs/fcaf3d/fcaf3d_scannet-3d-18class.py
+wget https://raw.githubusercontent.com/archie1983/fcaf3d/master/configs/fcaf3d/fcaf3d_3scales_scannet-3d-18class.py
+wget https://raw.githubusercontent.com/archie1983/fcaf3d/master/configs/fcaf3d/fcaf3d_2scales_scannet-3d-18class.py
+WORKDIR /ae_src/ros/src/MultiMap3D/checkpoints/
+wget https://github.com/samsunglabs/fcaf3d/releases/download/v1.0/20211007_144747.pth
+wget https://github.com/samsunglabs/fcaf3d/releases/download/v1.0/20211008_191702.pth
+wget https://github.com/samsunglabs/fcaf3d/releases/download/v1.0/20211008_151041.pth
+mv 20211008_151041.pth fcaf3d_2scales_scannet-3d-18class_20211008_151041.pth
+mv 20211008_191702.pth fcaf3d_3scales_scannet-3d-18class_20211008_191702.pth
+mv 20211007_144747.pth fcaf3d_scannet-3d-18class_20211007_144747.pth
+
 # Or we can even just try to install the pre-built wheels.

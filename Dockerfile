@@ -20,7 +20,7 @@ RUN apt-get -y update && apt-get -y install wget libedit-dev autoconf bc build-e
 # Now ROS
 RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
 RUN curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add -
-RUN apt-get -y update && apt-get -y -o Dpkg::Options::="--force-overwrite" install ros-noetic-desktop-full ros-noetic-pcl-conversions ros-noetic-pcl-ros ros-noetic-perception ros-noetic-jsk-recognition-msgs ros-noetic-jsk-footstep-msgs
+RUN apt-get -y update && apt-get -y -o Dpkg::Options::="--force-overwrite" install ros-noetic-desktop-full ros-noetic-pcl-conversions ros-noetic-pcl-ros ros-noetic-perception ros-noetic-jsk-recognition-msgs ros-noetic-jsk-footstep-msgs ros-noetic-octomap-server
 
 #RUN pip install mmcv-full==1.3.8 -f https://download.openmmlab.com/mmcv/dist/cu102/torch1.8.0/index.html
 #RUN pip install mmdet==2.14.0
@@ -89,6 +89,8 @@ RUN git checkout for_fcaf3d_on_jetson_xavier_r34
 # whatever we can get from pip
 RUN pip3 install mmdet==2.28.2 mmsegmentation==0.30.0 numpy==1.19.5 pandas==1.4.4 opencv-python==4.5.1.48 matplotlib==3.5.2 shapely==1.8.5
 
+pip3 install mmengine
+
 # Now cocoapi
 WORKDIR /ae_src/cocoapi/PythonAPI
 # Just in case uninstall pycocotools if they've been pulled in from apt repos
@@ -105,7 +107,8 @@ RUN MMCV_WITH_OPS=1 pip3 install -e .
 
 # Now build and install llvmlite
 WORKDIR /ae_src/llvm-project/llvm
-RUN export PREFIX=/usr/local CPU_COUNT=4
+ENV PREFIX=/usr/local 
+ENV CPU_COUNT=4
 RUN ../../llvmlite/conda-recipes/llvmdev/build.sh
 WORKDIR /ae_src/llvmlite
 #RUN export LLVM_CONFIG=/usr/local/bin/llvm-config

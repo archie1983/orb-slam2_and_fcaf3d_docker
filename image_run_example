@@ -15,3 +15,7 @@ sudo docker run --gpus all --shm-size=8g --net=host -it -e DISPLAY=192.168.8.186
 sudo docker run --gpus all --shm-size=8g --net=host -it -e DISPLAY=192.168.8.162:10 -e GDK_BACKEND=x11 -e XAUTHORITY=/root/.Xauthority -v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/.Xauthority_docker:/root/.Xauthority:rw -v /home/jet/robotics/semantic_navigation/docker_fcaf3d/root:/mmdetection3d/data multimap3d_working_xorg_installed
 
 sudo docker run --gpus all --shm-size=8g --net=host -it -e DISPLAY=192.168.8.162:10 -e GDK_BACKEND=x11 -e XAUTHORITY=/root/.Xauthority -v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/.Xauthority_docker:/root/.Xauthority:rw -v /home/jet/robotics/semantic_navigation/docker_fcaf3d/root:/mmdetection3d/data multimap3d_working_gtk_problem
+
+sudo docker run --gpus all --shm-size=8g --net=host -it -e DISPLAY=192.168.8.162:10 -e GDK_BACKEND=x11 -e XAUTHORITY=/root/.Xauthority -v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/.Xauthority_docker:/root/.Xauthority:rw -v /home/jet/robotics/semantic_navigation/docker_fcaf3d/root:/mmdetection3d/data --device=/dev/video0:/dev/video0 realsense_drivers_installed
+
+sudo docker run --gpus all --shm-size=8g --net=host -it -e DISPLAY=192.168.8.162:10 -e GDK_BACKEND=x11 -e XAUTHORITY=/root/.Xauthority -v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/.Xauthority_docker:/root/.Xauthority:rw -v /home/jet/robotics/semantic_navigation/docker_fcaf3d/root:/mmdetection3d/data --device=/dev:/dev --privileged realsense_ros_packages_set_up

@@ -1,0 +1,2 @@
+FROM vnc_set_up
+EXPOSE 5901
